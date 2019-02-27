@@ -60,16 +60,13 @@ def main():
         "-dampening", type=float, default=0.75, help="Sample dampening during burnin"
     )
     parser.add_argument(
-        "-ndproc", type=int, default=8, help="Number of data loading processes"
-    )
-    parser.add_argument(
         "-eval_each", type=int, default=1, help="Run evaluation every n-th epoch"
     )
     parser.add_argument(
         "-fresh", action="store_true", default=False, help="Override checkpoint"
     )
     parser.add_argument(
-        "-debug", action="store_true", default=False, help="Print debuggin output"
+        "-debug", action="store_true", default=False, help="Print debugging output"
     )
     parser.add_argument(
         "-gpu", default=0, type=int, help="Which GPU to run on (-1 for no gpu)"
@@ -89,7 +86,6 @@ def main():
     parser.add_argument("-burnin_multiplier", default=0.01, type=float)
     parser.add_argument("-neg_multiplier", default=1.0, type=float)
     parser.add_argument("-quiet", action="store_true", default=False)
-    parser.add_argument("-lr_type", choices=["scale", "constant"], default="constant")
     parser.add_argument(
         "-train_threads",
         type=int,
@@ -119,11 +115,11 @@ def main():
         log.info("Using adjacency matrix dataloader")
         dset = load_adjacency_matrix(opt.dset, "hdf5")
         log.info("Setting up dataset...")
+        # noinspection PyArgumentList
         data = AdjacencyDataset(
             dset,
             opt.negs,
             opt.batchsize,
-            opt.ndproc,
             burnin=opt.burnin > 0,
             sample_dampening=opt.dampening,
         )
@@ -133,9 +129,6 @@ def main():
     data.neg_multiplier = opt.neg_multiplier
     train._lr_multiplier = opt.burnin_multiplier
     log.info(f"json_conf: {json.dumps(vars(opt))}")
-
-    if opt.lr_type == "scale":
-        opt.lr = opt.lr * opt.batchsize
 
     # optimizer = RSGDTF(learning_rate=opt.lr, rgrad=manifold.rgrad, expm=manifold.expm)
     # model.compile(optimizer=optimizer,

@@ -38,26 +38,11 @@ cdef class BatchedDataset:
     cdef object queue
     cdef list threads
 
-    def __cinit__(self, idx, objects, weights, nnegs, batch_size, num_workers,
+    def __cinit__(self, idx, objects, weights, nnegs, batch_size, num_workers=4,
                   burnin=False, sample_dampening=0.75):
-        '''
-        Create a dataset for training Hyperbolic embeddings.  Rather than
-        allocating many tensors for individual dataset items, we instead
-        produce a single batch in each iteration.  This allows us to do a single
-        Tensor allocation for the entire batch and filling it out in place.
-
-        Args:
-            idx (ndarray[ndims=2]):  Indexes of objects corresponding to co-occurrence.
-                I.E. if `idx[0, :] == [4, 19]`, then item 4 co-occurs with item 19
-            weights (ndarray[ndims=1]): Weights for each co-occurence.  Corresponds
-                to the number of times a pair co-occurred.  (Equal length to `idx`)
-            nnegs (int): Number of negative samples to produce with each positive
-            objects (list[str]): Mapping from integer ID to hashtag string
-            nnegs (int): Number of negatives to produce with each positive
-            batch_size (int): Size of each minibatch
-            num_workers (int): Number of threads to use to produce each batch
-            burnin (bool): ???
-        '''
+        """
+        Create a dataset for training Hyperbolic embeddings.
+        """
         self.idx = idx
         self.objects = objects
         self.nnegs = nnegs
@@ -72,7 +57,7 @@ cdef class BatchedDataset:
         self.neg_multiplier = 1
         self.queue = queue.Queue(maxsize=num_workers)
 
-    # Setup the weights datastructure and sampling tables
+    # Setup the weights data structure and sampling tables
     def _mk_weights(self, npc.ndarray[npc.long_t, ndim=2] idx, npc.ndarray[npc.double_t, ndim=1] weights):
         cdef int i
         cdef long t, h
@@ -119,19 +104,19 @@ cdef class BatchedDataset:
         return self
 
     cpdef _worker(self, i):
-        cdef long [:,:] memview
+        cdef long [:,:] _data
         cdef long count
 
         while self.current < self.idx.shape[0]:
             current = self.current
             self.current += self.batch_size
             ix = tensorflow.Variable(tensorflow.random_uniform([self.batch_size, self.nnegatives() + 2], dtype=tensorflow.int64, maxval=tensorflow.int64.max))
-            memview = ix.numpy()
+            _data = ix.numpy()
             with nogil:
-                count = self._getbatch(current, memview)
+                count = self._getbatch(current, _data)
             if count < self.batch_size:
                 ix = tensorflow.strided_slice(ix, [0, 0], [self.idx.shape[0], count])
-            ix.assign(memview)
+            ix.assign(_data)
             self.queue.put((ix, tensorflow.zeros(ix.shape[0], dtype=tensorflow.int32)))
         self.queue.put(i)
 
@@ -145,13 +130,13 @@ cdef class BatchedDataset:
         return self.next()
 
     def next(self):
-        '''
+        """
         Python visible function for indexing the dataset.  This first
         allocates a tensor, and then modifies it in place with `_getitem`
 
         Args:
             idx (int): index into the dataset
-        '''
+        """
         size = self.queue.qsize()
         if size == 0 and all([not(t.is_alive()) for t in self.threads]):
             # No more items in queue and we've joined with all worker threads
@@ -163,15 +148,14 @@ cdef class BatchedDataset:
         return item
 
     cdef public long _getbatch(self, int i, long[:,:] ix) nogil:
-        '''
+        """
         Fast internal C method for indexing the dataset/negative sampling
 
         Args:
             i (int): Index into the dataset
-            ix (long [:]) - A C memoryview of the result tensor that we will
-                return to Python
+            ix (long [:]) - A mutable tensor (numpy)
             N (int): Total number of unique objects in the dataset (convert to raw C)
-        '''
+        """
         cdef long t, h, n, fu
         cdef int ntries, ixptr, idx, j
         cdef unordered_set[long] negs

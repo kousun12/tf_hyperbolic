@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import matplotlib.pyplot as plt
 from collections import namedtuple
 import re
@@ -10,6 +12,8 @@ from hype.sn import initialize
 from hype.tf_graph import load_edge_list
 
 plt.style.use("ggplot")
+
+# TODO - tSNE to collapse higher dims
 
 
 def pplot(names, embeddings, name="mammal"):
@@ -28,13 +32,12 @@ def pplot(names, embeddings, name="mammal"):
     fig.savefig("plots/" + name + ".png", dpi=fig.dpi)
 
 
-Opts = namedtuple("Opts", "manifold dim negs batchsize ndproc burnin dampening")
+Opts = namedtuple("Opts", "manifold dim negs batchsize burnin dampening")
 
 if __name__ == "__main__":
-    opt = Opts("poincare", 2, 50, 10, 4, 20, 0.75)
+    opt = Opts("poincare", 2, 50, 10, 20, 0.75)
     manifold = MANIFOLDS[opt.manifold](debug=False, max_norm=500000)
     idx, objects, weights = load_edge_list("wordnet/mammal_closure.csv", False)
-    # data = BatchedDataset(idx, objects, weights, opt.negs, opt.batchsize, opt.ndproc, opt.burnin > 0, opt.dampening)
     model, data, model_name, conf = initialize(
         manifold, opt, idx, objects, weights, sparse=False
     )

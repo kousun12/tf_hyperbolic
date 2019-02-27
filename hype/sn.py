@@ -10,14 +10,7 @@ def initialize(manifold, opt, idx, objects, weights, sparse=False):
     conf = []
     # noinspection PyArgumentList
     data = BatchedDataset(
-        idx,
-        objects,
-        weights,
-        opt.negs,
-        opt.batchsize,
-        opt.ndproc,
-        opt.burnin > 0,
-        opt.dampening,
+        idx, objects, weights, opt.negs, opt.batchsize, opt.burnin > 0, opt.dampening
     )
     # data = Dataset(idx, objects, weights, opt.negs)
     model = Embedding(len(data.objects), opt.dim, manifold, sparse=sparse)

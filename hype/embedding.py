@@ -33,7 +33,6 @@ class Embedding(tf.keras.Model):
         )
 
     def call(self, inputs, training=False, **kwargs):
-        # e = self.manifold.normalize(inputs)
         if self.pre_hook is not None:
             inputs = self.pre_hook(inputs)
         return self._forward(inputs)

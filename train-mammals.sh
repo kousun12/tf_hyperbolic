@@ -6,7 +6,6 @@ python3 embed.py \
        -epochs 300 \
        -negs 50 \
        -burnin 20 \
-       -ndproc 4 \
        -manifold poincare \
        -dset wordnet/mammal_closure.csv \
        -checkpoint checkpoints/mammals-2d.tf \

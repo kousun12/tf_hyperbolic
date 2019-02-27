@@ -35,7 +35,7 @@ cdef class AdjacencyDataset:
     cdef double [:] S, weights
     cdef long [:] A, ids, neighbors, offsets, perm
 
-    def __cinit__(self, adj, nnegs, batch_size, num_workers, burnin = False,
+    def __cinit__(self, adj, nnegs, batch_size, num_workers=4, burnin=False,
             sample_dampening=0.75):
         self.burnin = burnin
         self.num_workers = num_workers
