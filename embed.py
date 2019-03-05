@@ -2,7 +2,6 @@
 
 import tensorflow as tf
 
-
 tf.enable_eager_execution()
 import sys
 import json
@@ -131,7 +130,8 @@ def main():
         losses = tf.constant([], dtype=tf.float64)
         for batch, (inputs, outputs) in enumerate(data):
             cur_loss = train(model, inputs, outputs, learning_rate=lr)
-            losses = tf.concat([losses, [cur_loss]], axis=0)
+            if cur_loss is not None:
+                losses = tf.concat([losses, [cur_loss]], axis=0)
 
         if epoch % opt.eval_each == 0:
             print(f"epoch {epoch} - loss: {tf.reduce_mean(losses)}, lr: {lr}]")

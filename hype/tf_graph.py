@@ -4,6 +4,7 @@ import numpy as np
 import pandas
 import h5py
 import tensorflow as tf
+from tensorflow.python.framework.errors_impl import InvalidArgumentError
 
 
 def load_adjacency_matrix(path, format="hdf5", symmetrize=False):
@@ -69,7 +70,10 @@ def load_edge_list(path, symmetrize=False):
 def train(model, inputs, outputs, learning_rate=tf.constant(0.3, dtype=tf.float64)):
     with tf.GradientTape() as t:
         t.watch([model.emb])
-        _loss = model.loss(model(inputs), outputs)
+        try:
+            _loss = model.loss(model(inputs), outputs)
+        except InvalidArgumentError:
+            return None
     d_emb, *rest = t.gradient(_loss, t.watched_variables(), None)
     d_p = model.manifold.rgrad(model.emb, d_emb)
     update = model.manifold.expm(model.emb, d_p, lr=learning_rate)

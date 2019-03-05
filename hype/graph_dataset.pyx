@@ -183,7 +183,6 @@ cdef class BatchedDataset:
             ixptr = 2
 
             weight_th = self._weights[t][h]
-
             negs = unordered_set[long]()
 
             while ntries < self.max_tries and negs.size() < self._nnegatives():
