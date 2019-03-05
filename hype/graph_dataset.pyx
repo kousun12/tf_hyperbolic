@@ -110,13 +110,19 @@ cdef class BatchedDataset:
         while self.current < self.idx.shape[0]:
             current = self.current
             self.current += self.batch_size
-            ix = tensorflow.Variable(tensorflow.random_uniform([self.batch_size, self.nnegatives() + 2], dtype=tensorflow.int64, maxval=tensorflow.int64.max))
+            ix = tensorflow.Variable(
+                tensorflow.random_uniform(
+                    [self.batch_size, self.nnegatives() + 2],
+                    dtype=tensorflow.int64,
+                    maxval=tensorflow.int64.max
+                )
+            )
             _data = ix.numpy()
             with nogil:
                 count = self._getbatch(current, _data)
+            ix.assign(_data)
             if count < self.batch_size:
                 ix.assign(tensorflow.strided_slice(ix, [0, 0], [self.idx.shape[0], count]))
-            ix.assign(_data)
             self.queue.put((ix, tensorflow.zeros(ix.shape[0], dtype=tensorflow.int32)))
         self.queue.put(i)
 

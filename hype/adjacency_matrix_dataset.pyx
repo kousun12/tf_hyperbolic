@@ -106,11 +106,12 @@ cdef class AdjacencyDataset:
             self.current += self.batch_size
 
             batch = tensorflow.Variable(tensorflow.random_uniform([self.batch_size, self.nnegatives() + 2], dtype=tensorflow.int64, maxval=tensorflow.int64.max))
-            memview = batch.numpy()
+            _data = batch.numpy()
             with nogil:
-                count = self._getbatch(start, memview, &seed)
+                count = self._getbatch(start, _data, &seed)
+            batch.assign(_data)
             if count < self.batch_size:
-                batch = tensorflow.strided_slice(batch, [0, 0], [self.neighbors.shape[0], count])
+                batch.assign(tensorflow.strided_slice(batch, [0, 0], [self.neighbors.shape[0], count]))
             self.queue.put((batch, tensorflow.zeros(batch.shape[0], dtype=tensorflow.int32)))
         self.queue.put(tid)
 
