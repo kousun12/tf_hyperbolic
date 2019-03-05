@@ -1,5 +1,12 @@
 # Hyperbolic N-Space Embeddings for TensorFlow
 
+Hyperbolic n-space, is a maximally symmetric, n-dimensional Riemannian manifold with constant negative sectional curvature. It turns out that hyperbolic space is very well suited for representing hierarchical data because it 'curves' space, allowing parent and sibling distances to stay constant over many branches without needing to increase dimensionality, as is the case in Euclidean space. A relatively intuitive model for thinking of embeddings in hyperbolic space is the poincare ball, where you can think of distances that increase exponentially as you move out from the center of the disk/ball.
+
+This is an implementation of some basic functions for supporting hyperbolic geometries in the Poincare model (Lorentz to come) as well as functions to calculate riemann gradients over hyperbolic riemann manifolds. Loss is a simple cross-entropy as a demonstration.
+
+<br/><p align="center"><img src="plots/tf-mammals-2d.png" alt="plot"></p><br/>
+
+
 Build cython loader:
 
 This will generate the transitive closure of the full noun hierarchy as well as of the mammals subtree of WordNet.
