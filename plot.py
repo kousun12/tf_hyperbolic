@@ -44,4 +44,4 @@ if __name__ == "__main__":
     )
     ck_name = "nouns-10d.tf"
     model.load_weights(f"checkpoints/{ck_name}")
-    poincare_plot(objects, model.emb.numpy(), ck_name, take=12)
+    poincare_plot(objects, model.emb.numpy(), ck_name, take=80)
