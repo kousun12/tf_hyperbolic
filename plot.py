@@ -42,5 +42,5 @@ if __name__ == "__main__":
         manifold, opt, idx, objects, weights, sparse=False
     )
     model.load_weights("checkpoints/mammals-2d.tf")
-    pplot(objects[:40], model.emb.numpy(), "tf-mammals-2d")
+    pplot(objects[:100], model.emb.numpy(), "tf-mammals-2d")
     plt.show()

@@ -20,7 +20,7 @@ from hype.poincare import PoincareManifold
 import sys
 import json
 
-tf.random.set_random_seed(42)
+# tf.random.set_random_seed(42)
 np.random.seed(42)
 
 MANIFOLDS = {"euclidean": EuclideanManifold, "poincare": PoincareManifold}
@@ -156,13 +156,12 @@ def main():
             lr = ops.convert_to_tensor(
                 exp_decay(epoch), name="learning_rate", dtype=tf.float64
             )
-            b_ct = 0
-            loss_ag = 0
+            losses = tf.constant([], dtype=tf.float64)
             for batch, (inputs, outputs) in enumerate(data):
-                b_ct += 1
-                loss_ag += train(model, inputs, outputs, learning_rate=lr)
+                cur_loss = train(model, inputs, outputs, learning_rate=lr)
+                losses = tf.concat([losses, [cur_loss]], axis=0)
 
-            print(f"epoch {epoch} - loss: {loss_ag / b_ct}, lr: {lr}]")
+            print(f"epoch {epoch} - loss: {tf.reduce_mean(losses)}, lr: {lr}]")
             # TODO - use model.save()
             model.save_weights(opt.checkpoint or "/tmp/hype_emb.tf")
         print(model.summary())
