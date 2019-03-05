@@ -2,14 +2,19 @@
 
 import tensorflow as tf
 
+from plot import poincare_plot
+
 tf.enable_eager_execution()
 import math
-from tensorflow.python.framework import ops
-from hype.tf_graph import train
-
-import numpy as np
+import sys
+import json
+import ntpath
 import logging
 import argparse
+import numpy as np
+
+from tensorflow.python.framework import ops
+from hype.tf_graph import train
 from hype.sn import initialize
 from hype.adjacency_matrix_dataset import AdjacencyDataset
 from hype.tf_graph import load_adjacency_matrix, load_edge_list
@@ -17,10 +22,8 @@ from hype.embedding import Embedding
 from hype.rsgd import RSGDTF
 from hype.euclidean import EuclideanManifold
 from hype.poincare import PoincareManifold
-import sys
-import json
 
-# tf.random.set_random_seed(42)
+tf.random.set_random_seed(42)
 np.random.seed(42)
 
 MANIFOLDS = {"euclidean": EuclideanManifold, "poincare": PoincareManifold}
@@ -136,9 +139,9 @@ def main():
     #               metrics=['accuracy'])
 
     def exp_decay(step):
-        initial_rate = 0.5
+        initial_rate = opt.lr * 1.75
         k = 0.05
-        return max(initial_rate * math.exp(-k * step), 0.3)
+        return max(initial_rate * math.exp(-k * step), opt.lr)
 
     if opt.checkpoint and not opt.fresh:
         print("using loaded checkpoint")
@@ -150,12 +153,10 @@ def main():
         print("starting with fresh model")
 
     with tf.device("/cpu:0"):
-        num_epochs = 500
+        num_epochs = 120
         epochs = range(num_epochs)
+        lr = ops.convert_to_tensor(opt.lr, name="learning_rate", dtype=tf.float64)
         for epoch in epochs:
-            lr = ops.convert_to_tensor(
-                exp_decay(epoch), name="learning_rate", dtype=tf.float64
-            )
             losses = tf.constant([], dtype=tf.float64)
             for batch, (inputs, outputs) in enumerate(data):
                 cur_loss = train(model, inputs, outputs, learning_rate=lr)
@@ -163,8 +164,10 @@ def main():
 
             print(f"epoch {epoch} - loss: {tf.reduce_mean(losses)}, lr: {lr}]")
             # TODO - use model.save()
-            model.save_weights(opt.checkpoint or "/tmp/hype_emb.tf")
+            checkpoint_path = opt.checkpoint or "/tmp/hype_emb.tf"
+            model.save_weights(checkpoint_path)
         print(model.summary())
+        poincare_plot(objects, model.emb.numpy(), ntpath.basename(checkpoint_path))
 
 
 if __name__ == "__main__":
