@@ -70,7 +70,7 @@ def main():
         "-debug", action="store_true", default=False, help="Print debugging output"
     )
     parser.add_argument(
-        "-gpu", default=0, type=int, help="Which GPU to run on (-1 for no gpu)"
+        "-gpu", default=-1, type=int, help="Which GPU to run on (-1 for no gpu)"
     )
     parser.add_argument(
         "-sym", action="store_true", default=False, help="Symmetrize dataset"
@@ -87,21 +87,15 @@ def main():
     parser.add_argument("-burnin_multiplier", default=0.01, type=float)
     parser.add_argument("-neg_multiplier", default=1.0, type=float)
     parser.add_argument("-quiet", action="store_true", default=False)
-    parser.add_argument(
-        "-train_threads",
-        type=int,
-        default=1,
-        help="Number of threads to use in training",
-    )
     opt = parser.parse_args()
 
     log_level = logging.DEBUG if opt.debug else logging.INFO
     log = logging.getLogger(opt.manifold)
     logging.basicConfig(level=log_level, format="%(message)s", stream=sys.stdout)
 
-    if opt.gpu >= 0 and opt.train_threads > 1:
+    if opt.gpu >= 0 and not tf.test.is_gpu_available():
         opt.gpu = -1
-        log.warning(f"defaulting to CPU...")
+        log.warning(f"no gpu, defaulting to CPU...")
 
     manifold = MANIFOLDS[opt.manifold](debug=opt.debug, max_norm=opt.maxnorm)
     opt.dim = manifold.dim(opt.dim)
@@ -134,29 +128,25 @@ def main():
     #               loss='categorical_crossentropy',
     #               metrics=['accuracy'])
 
-    def exp_decay(step):
-        initial_rate = opt.lr * 1.75
-        k = 0.05
-        return max(initial_rate * math.exp(-k * step), opt.lr)
-
     if opt.checkpoint and not opt.fresh:
         print("using loaded checkpoint")
         try:
             model.load_weights(opt.checkpoint)
         except:
-            print(f"can not load existing weights for {opt.checkpoint}")
+            print(f"not loading existing weights for {opt.checkpoint}")
     else:
         print("starting with fresh model")
 
     with tf.device("/cpu:0"):
-        num_epochs = 120
+        num_epochs = opt.epochs or 120
         epochs = range(num_epochs)
         lr_base = ops.convert_to_tensor(opt.lr, name="learning_rate", dtype=tf.float64)
         for epoch in epochs:
+            data.burnin = opt.burnin > 0 and epoch < opt.burnin
             lr_mult = (
-                tf.constant(opt.burnin_multiplier)
-                if data.burnin and epoch < opt.burnin
-                else tf.constant(1)
+                tf.constant(opt.burnin_multiplier, dtype=tf.float64)
+                if data.burnin
+                else tf.constant(1, dtype=tf.float64)
             )
             lr = lr_base * lr_mult
             losses = tf.constant([], dtype=tf.float64)

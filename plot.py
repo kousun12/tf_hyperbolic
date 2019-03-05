@@ -36,12 +36,12 @@ def poincare_plot(names, embeddings, name, take=100):
 Opts = namedtuple("Opts", "manifold dim negs batchsize burnin dampening")
 
 if __name__ == "__main__":
-    opt = Opts("poincare", 5, 50, 10, 20, 0.75)
+    opt = Opts("poincare", 2, 50, 10, 20, 0.75)
     manifold = MANIFOLDS[opt.manifold](debug=False, max_norm=500_000)
     idx, objects, weights = load_edge_list("wordnet/mammal_closure.csv", False)
     model, data, model_name, conf = initialize(
         manifold, opt, idx, objects, weights, sparse=False
     )
-    ck_name = "mammals-5d.tf"
+    ck_name = "mammals-2d.tf"
     model.load_weights(f"checkpoints/{ck_name}")
     poincare_plot(objects, model.emb.numpy(), ck_name)

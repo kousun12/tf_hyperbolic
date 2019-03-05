@@ -36,7 +36,6 @@ python3 embed.py \
   -sparse \
   -burnin_multiplier 0.01 \
   -neg_multiplier 0.1 \
-  -train_threads 5 \
   -dampening 1.0 \
   -batchsize 50 \
   -manifold "$MODEL" \
