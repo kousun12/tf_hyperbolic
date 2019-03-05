@@ -6,6 +6,8 @@ This is an implementation of some basic functions for supporting hyperbolic geom
 
 <br/><p align="center"><img src="mammals-2d.png" alt="plot"></p><br/>
 
+#### Getting Started
+
 Build cython loader:
 
 This will generate the transitive closure of the full noun hierarchy as well as of the mammals subtree of WordNet.
@@ -19,3 +21,10 @@ To embed the transitive closure of the WordNet mammals subtree, first generate t
 cd wordnet
 python transitive_closure.py
 ```
+
+#### License
+This code is licensed under [CC-BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
+
+![badge](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)
+
+In part adapted from [poincare-embeddings](https://github.com/facebookresearch/poincare-embeddings)
