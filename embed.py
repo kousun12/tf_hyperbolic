@@ -126,9 +126,7 @@ def main():
         )
         model = Embedding(data.N, opt.dim, manifold, sparse=opt.sparse)
 
-    # set burnin parameters
     data.neg_multiplier = opt.neg_multiplier
-    train._lr_multiplier = opt.burnin_multiplier
     log.info(f"json_conf: {json.dumps(vars(opt))}")
 
     # optimizer = RSGDTF(learning_rate=opt.lr, rgrad=manifold.rgrad, expm=manifold.expm)
@@ -153,8 +151,14 @@ def main():
     with tf.device("/cpu:0"):
         num_epochs = 120
         epochs = range(num_epochs)
-        lr = ops.convert_to_tensor(opt.lr, name="learning_rate", dtype=tf.float64)
+        lr_base = ops.convert_to_tensor(opt.lr, name="learning_rate", dtype=tf.float64)
         for epoch in epochs:
+            lr_mult = (
+                tf.constant(opt.burnin_multiplier)
+                if data.burnin and epoch < opt.burnin
+                else tf.constant(1)
+            )
+            lr = lr_base * lr_mult
             losses = tf.constant([], dtype=tf.float64)
             for batch, (inputs, outputs) in enumerate(data):
                 cur_loss = train(model, inputs, outputs, learning_rate=lr)
