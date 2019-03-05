@@ -5,6 +5,7 @@ Hyperbolic n-space, is a maximally symmetric, n-dimensional Riemannian manifold 
 This is an implementation of some basic functions for supporting hyperbolic geometries in the Poincare model (Lorentz to come) as well as functions to calculate riemann gradients over hyperbolic riemann manifolds. Loss is a simple cross-entropy as a demonstration.
 
 <p align="center"><img src="mammals-2d.png" alt="plot"></p>
+<p align="center"><img src="circle-limit.jpg" alt="escher"></p>
 
 #### Getting Started
 
