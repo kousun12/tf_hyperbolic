@@ -24,8 +24,9 @@ case "$MODEL" in
   * ) echo "$USAGE"; exit 1;;
 esac
 
+# todo: -sparse
 python3 embed.py \
-  -checkpoint nouns.bin \
+  -checkpoint checkpoints/nouns-10d.tf \
   -dset wordnet/noun_closure.csv \
   -epochs 1500 \
   -negs 50 \
@@ -33,7 +34,6 @@ python3 embed.py \
   -dampening 0.75 \
   -eval_each 100 \
   -fresh \
-  -sparse \
   -burnin_multiplier 0.01 \
   -neg_multiplier 0.1 \
   -dampening 1.0 \
