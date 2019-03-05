@@ -32,7 +32,7 @@ python3 embed.py \
   -negs 50 \
   -burnin 20 \
   -dampening 0.75 \
-  -eval_each 100 \
+  -eval_each 5 \
   -fresh \
   -burnin_multiplier 0.01 \
   -neg_multiplier 0.1 \

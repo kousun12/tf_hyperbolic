@@ -115,7 +115,7 @@ cdef class BatchedDataset:
             with nogil:
                 count = self._getbatch(current, _data)
             if count < self.batch_size:
-                ix = tensorflow.strided_slice(ix, [0, 0], [self.idx.shape[0], count])
+                ix.assign(tensorflow.strided_slice(ix, [0, 0], [self.idx.shape[0], count]))
             ix.assign(_data)
             self.queue.put((ix, tensorflow.zeros(ix.shape[0], dtype=tensorflow.int32)))
         self.queue.put(i)
