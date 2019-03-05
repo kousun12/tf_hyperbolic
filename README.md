@@ -1,4 +1,4 @@
-# Poincare Embeddings for TensorFlow
+# Hyperbolic N-Space Embeddings for TensorFlow
 
 Build cython loader:
 
