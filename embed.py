@@ -2,13 +2,11 @@
 
 import tensorflow as tf
 
-from plot import poincare_plot
 
 tf.enable_eager_execution()
 import math
 import sys
 import json
-import ntpath
 import logging
 import argparse
 import numpy as np
@@ -167,7 +165,6 @@ def main():
             checkpoint_path = opt.checkpoint or "/tmp/hype_emb.tf"
             model.save_weights(checkpoint_path)
         print(model.summary())
-        poincare_plot(objects, model.emb.numpy(), ntpath.basename(checkpoint_path))
 
 
 if __name__ == "__main__":
