@@ -1,4 +1,4 @@
-name: poincare
+name: tf_hyperbolic
 channels:
 - anaconda
 - defaults
@@ -11,3 +11,5 @@ dependencies:
 - h5py
 - cython
 - tqdm
+- matplotlib
+- umap-learn

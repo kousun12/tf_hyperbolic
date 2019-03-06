@@ -10,7 +10,22 @@ This is an implementation of some basic functions for supporting hyperbolic geom
 
 #### Getting Started
 
-The first thing you'll need to do is compile the cython modules.
+Install the dependencies in your working environment, listed in `requirements.txt` and `environment.yml`
+
+```bash
+# if using venv
+virtualenv .
+source venv/bin/activate
+pip install -r requirements.txt
+
+# or, with conda
+conda env create -f environment.yml
+source activate poincare
+
+# or, just pip install with your working python env
+```
+
+The first thing you'll need to do is compile the cython modules that load the datasets.
 
 ```bash
 python setup.py build_ext --inplace
