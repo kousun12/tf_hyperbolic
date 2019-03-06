@@ -33,9 +33,9 @@ def poincare_plot(names, embeddings, name, take=100):
 
 
 Opts = namedtuple("Opts", "manifold dim negs batchsize burnin dampening")
+opt = Opts("poincare", 5, 50, 50, 20, 0.75)
 closure_name = "wordnet/mammal_closure.csv"
 ck_name = "mammals-5d.tf"
-opt = Opts("poincare", 5, 50, 50, 20, 0.75)
 
 if __name__ == "__main__":
     manifold = MANIFOLDS[opt.manifold](debug=False, max_norm=500_000)
