@@ -3,22 +3,32 @@
 from .graph_dataset import BatchedDataset
 from .embedding import Embedding
 
-model_name = "%s_dim%d"
+name_template = "%s_dim%d"
 
 
-def initialize(manifold, opt, idx, objects, weights, sparse=False):
-    conf = []
+def initialize(
+    manifold,
+    idx,
+    objects,
+    weights,
+    dim=20,
+    negs=50,
+    batch_size=100,
+    burnin=20,
+    dampening=0.75,
+    sparse=False,
+):
     # noinspection PyArgumentList
     data = BatchedDataset(
         idx,
         objects,
         weights,
-        opt.negs,
-        opt.batchsize,
-        burnin=opt.burnin > 0,
-        sample_dampening=opt.dampening,
+        negs,
+        batch_size,
+        burnin=burnin > 0,
+        sample_dampening=dampening,
     )
-    # data = Dataset(idx, objects, weights, opt.negs)
-    model = Embedding(len(data.objects), opt.dim, manifold, sparse=sparse)
+    # data = Dataset(idx, objects, weights, negs)
+    model = Embedding(len(data.objects), dim, manifold, sparse=sparse)
     data.objects = objects
-    return model, data, model_name % (opt.manifold, opt.dim), conf
+    return model, data, name_template % (manifold.name, dim)

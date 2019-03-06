@@ -7,6 +7,7 @@ import tensorflow as tf
 
 class EuclideanManifold(Manifold, ABC):
     __slots__ = ["max_norm"]
+    name = "euclidean"
 
     def __init__(self, max_norm=1, *args, **kwargs):
         super().__init__(*args, **kwargs)

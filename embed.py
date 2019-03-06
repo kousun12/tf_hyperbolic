@@ -10,10 +10,10 @@ import argparse
 import numpy as np
 
 from tensorflow.python.framework import ops
-from hype.tf_graph import train
+from hype.train import train
 from hype.sn import initialize
 from hype.adjacency_matrix_dataset import AdjacencyDataset
-from hype.tf_graph import load_adjacency_matrix, load_edge_list
+from hype.graph import load_adjacency_matrix, load_edge_list
 from hype.embedding import Embedding
 from hype.rsgd import RSGDTF
 from hype.euclidean import EuclideanManifold
@@ -27,6 +27,86 @@ DEFAULT_CHPT = "/tmp/hype_embeddings.pth"
 
 
 def main():
+    opt = parse_args()
+    log_level = logging.DEBUG if opt.debug else logging.INFO
+    log = logging.getLogger(opt.manifold)
+    logging.basicConfig(level=log_level, format="%(message)s", stream=sys.stdout)
+
+    manifold = MANIFOLDS[opt.manifold](debug=opt.debug, max_norm=opt.maxnorm)
+    opt.dim = manifold.dim(opt.dim)
+
+    model, data = _load(opt, log, manifold)
+    _run(model, data, opt, log)
+    print(model.summary())
+
+
+def _run(model, data, opt, log):
+    epochs = range(opt.epochs)
+    lr_base = ops.convert_to_tensor(opt.lr, name="learning_rate", dtype=tf.float64)
+
+    for epoch in epochs:
+        data.burnin = opt.burnin > 0 and epoch < opt.burnin
+        lr_mult = (
+            tf.constant(opt.burnin_multiplier, dtype=tf.float64)
+            if data.burnin
+            else tf.constant(1, dtype=tf.float64)
+        )
+        lr = lr_base * lr_mult
+        e_losses = tf.constant([], dtype=tf.float64)
+        for batch, (inputs, outputs) in enumerate(data):
+            cur_loss = train(model, inputs, outputs, learning_rate=lr)
+            if cur_loss is not None:
+                e_losses = tf.concat([e_losses, [cur_loss]], axis=0)
+
+        if epoch % opt.eval_each == 0:
+            log.info(f"epoch {epoch} - loss: {tf.reduce_mean(e_losses)}, lr: {lr}]")
+
+        model.save_weights(opt.checkpoint)  # TODO - use model.save()
+
+
+def _load(opt, log, manifold):
+    if "csv" in opt.dset:
+        log.info("Using edge list dataloader")
+        idx, objects, weights = load_edge_list(opt.dset, opt.sym)
+        model, data, model_name = initialize(
+            manifold,
+            idx,
+            objects,
+            weights,
+            sparse=opt.sparse,
+            dim=opt.dim,
+            negs=opt.negs,
+            batch_size=opt.batchsize,
+            burnin=opt.burnin,
+            dampening=opt.dampening,
+        )
+    else:
+        log.info("Using adjacency matrix dataloader")
+        dset = load_adjacency_matrix(opt.dset, "hdf5")
+        # noinspection PyArgumentList
+        data = AdjacencyDataset(
+            dset,
+            opt.negs,
+            opt.batchsize,
+            burnin=opt.burnin > 0,
+            sample_dampening=opt.dampening,
+        )
+        model = Embedding(data.N, opt.dim, manifold, sparse=opt.sparse)
+
+    data.neg_multiplier = opt.neg_multiplier
+    log.info(f"conf: {json.dumps(vars(opt))}")
+    if opt.checkpoint and not opt.fresh:
+        log.info("using loaded checkpoint")
+        try:
+            model.load_weights(opt.checkpoint)
+        except Exception:
+            log.info(f"not loading existing weights for {opt.checkpoint}")
+    else:
+        log.info("starting with fresh model")
+    return model, data
+
+
+def parse_args():
     parser = argparse.ArgumentParser(description="Train Hyperbolic Embeddings")
     parser.add_argument(
         "-checkpoint", default=DEFAULT_CHPT, help="Where to store the model checkpoint"
@@ -42,7 +122,7 @@ def main():
     )
     parser.add_argument("-lr", type=float, default=1000, help="Learning rate")
     parser.add_argument("-epochs", type=int, default=100, help="Number of epochs")
-    parser.add_argument("-batchsize", type=int, default=12800, help="Batchsize")
+    parser.add_argument("-batchsize", type=int, default=100, help="Batchsize")
     parser.add_argument("-negs", type=int, default=50, help="Number of negatives")
     parser.add_argument("-burnin", type=int, default=20, help="Epochs of burn in")
     parser.add_argument(
@@ -73,73 +153,11 @@ def main():
     parser.add_argument("-burnin_multiplier", default=0.01, type=float)
     parser.add_argument("-neg_multiplier", default=1.0, type=float)
     opt = parser.parse_args()
-
-    log_level = logging.DEBUG if opt.debug else logging.INFO
-    log = logging.getLogger(opt.manifold)
-    logging.basicConfig(level=log_level, format="%(message)s", stream=sys.stdout)
-
     if opt.gpu >= 0 and not tf.test.is_gpu_available():
         opt.gpu = -1
-        log.warning(f"no gpu, defaulting to CPU...")
+        print(f"no gpu, defaulting to CPU...")
 
-    manifold = MANIFOLDS[opt.manifold](debug=opt.debug, max_norm=opt.maxnorm)
-    opt.dim = manifold.dim(opt.dim)
-
-    if "csv" in opt.dset:
-        log.info("Using edge list dataloader")
-        idx, objects, weights = load_edge_list(opt.dset, opt.sym)
-        model, data, model_name, conf = initialize(
-            manifold, opt, idx, objects, weights, sparse=opt.sparse
-        )
-    else:
-        log.info("Using adjacency matrix dataloader")
-        dset = load_adjacency_matrix(opt.dset, "hdf5")
-        log.info("Setting up dataset...")
-        # noinspection PyArgumentList
-        data = AdjacencyDataset(
-            dset,
-            opt.negs,
-            opt.batchsize,
-            burnin=opt.burnin > 0,
-            sample_dampening=opt.dampening,
-        )
-        model = Embedding(data.N, opt.dim, manifold, sparse=opt.sparse)
-
-    data.neg_multiplier = opt.neg_multiplier
-    log.info(f"json_conf: {json.dumps(vars(opt))}")
-
-    if opt.checkpoint and not opt.fresh:
-        print("using loaded checkpoint")
-        try:
-            model.load_weights(opt.checkpoint)
-        except:
-            print(f"not loading existing weights for {opt.checkpoint}")
-    else:
-        print("starting with fresh model")
-
-    epochs = range(opt.epochs)
-    lr_base = ops.convert_to_tensor(opt.lr, name="learning_rate", dtype=tf.float64)
-    for epoch in epochs:
-        data.burnin = opt.burnin > 0 and epoch < opt.burnin
-        lr_mult = (
-            tf.constant(opt.burnin_multiplier, dtype=tf.float64)
-            if data.burnin
-            else tf.constant(1, dtype=tf.float64)
-        )
-        lr = lr_base * lr_mult
-        losses = tf.constant([], dtype=tf.float64)
-        for batch, (inputs, outputs) in enumerate(data):
-            cur_loss = train(model, inputs, outputs, learning_rate=lr)
-            if cur_loss is not None:
-                losses = tf.concat([losses, [cur_loss]], axis=0)
-
-        if epoch % opt.eval_each == 0:
-            print(f"epoch {epoch} - loss: {tf.reduce_mean(losses)}, lr: {lr}]")
-
-        # TODO - use model.save()
-        checkpoint_path = opt.checkpoint
-        model.save_weights(checkpoint_path)
-    print(model.summary())
+    return opt
 
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@ from .euclidean import EuclideanManifold
 
 
 class PoincareManifold(EuclideanManifold):
+    name = "euclidean"
+
     def __init__(self, eps=1e-14, **kwargs):
         super(PoincareManifold, self).__init__(**kwargs)
         self.eps = eps

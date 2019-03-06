@@ -8,6 +8,10 @@ class Manifold(ABC):
     def __init__(self, *args, **kwargs):
         pass
 
+    @property
+    def name(self):
+        raise NotImplementedError
+
     @staticmethod
     def dim(dim):
         return dim
