@@ -25,8 +25,5 @@ python transitive_closure.py
 ```
 
 #### License
-This code is licensed under [CC-BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
-
-![badge](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)
-
+Licensed under [CC-BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
 In part adapted from [poincare-embeddings](https://github.com/facebookresearch/poincare-embeddings)
