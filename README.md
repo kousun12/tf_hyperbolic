@@ -71,7 +71,7 @@ There's an optimizer that's not used in the demos, but runs the optimization ove
 
 `plot.py` will do basic visualizations over a poincare disk or, experimentally using umap dimensionality squashing.
 
-Training assumes the use of a sparse softmax cross entropy, which doesn't necessarily have to be the case, but is a good default measure here since we're trying to push apart negative sample sets during training. 
+Training uses a sparse softmax cross entropy for loss, which doesn't necessarily have to be the case, but is a good default measure here, where we want to push the negative samples for each hypernym example away from the related pair, so we can do this by acting as if the true probability distribution for the negative samples are zeros. 
 
 #### License
 This code is licensed under [CC-BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
